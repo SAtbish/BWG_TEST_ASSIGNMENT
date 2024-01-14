@@ -6,7 +6,7 @@ __pycache__/
 .venv
 # C extensions
 *.so
-poetry.lock
+*.lock
 .env
 # Distribution / packaging
 .Python
