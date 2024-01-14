@@ -6,7 +6,8 @@ __pycache__/
 .venv
 # C extensions
 *.so
-
+poetry.lock
+.env
 # Distribution / packaging
 .Python
 build/
