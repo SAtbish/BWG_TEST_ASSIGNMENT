@@ -8,6 +8,15 @@ packages = [{include = "bwg_test_assignment"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+python-binance = "^1.0.19"
+fastapi = "^0.109.0"
+uvicorn = "^0.25.0"
+nest-asyncio = "^1.5.8"
+sqlalchemy = "^2.0.25"
+asyncpg = "^0.29.0"
+alembic = "^1.13.1"
+python-dotenv = "^1.0.0"
+fastapi-pagination = "^0.12.14"
 
 
 [build-system]
