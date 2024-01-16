@@ -1,6 +1,7 @@
 from src.api.index import app
-from .symbols import router
+from src.api.routers import all_routers
 
-app.include_router(router)
+for router in all_routers:
+    app.include_router(router)
 
 __all__ = ["app"]
