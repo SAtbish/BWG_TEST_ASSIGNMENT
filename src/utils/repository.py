@@ -72,7 +72,6 @@ class SQLAlchemyRepository(AbstractRepository):
             limit=1
         )
         objects = await self.session.execute(stmt)
-
         obj = objects.first()
         if obj:
             obj = self.model.to_read_model(*obj)
@@ -80,7 +79,7 @@ class SQLAlchemyRepository(AbstractRepository):
 
         return obj, "not_find"
 
-    async def read(self, **filters):
+    async def read_one(self, **filters):
         stmt = get_filters_string(
             tablename=self.model.__tablename__,
             filters=filters
@@ -101,7 +100,7 @@ class SQLAlchemyRepository(AbstractRepository):
         )
         objects = await self.session.execute(stmt)
         result = [self.model.to_read_model(*obj) for obj in objects.all()]
-        return result
+        return result, None
 
     async def get_all_paginated(self, **filters):
         stmt = get_filters_string(
@@ -109,5 +108,5 @@ class SQLAlchemyRepository(AbstractRepository):
             filters=filters
         )
         objects = await self.session.execute(stmt)
-        paginated_objects = paginate(sequence=[obj for obj in objects.all()])
+        paginated_objects = paginate(sequence=[self.model.to_read_model(*obj) for obj in objects.all()])
         return paginated_objects
