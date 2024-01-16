@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from main import app
-from fastapi.responses import JSONResponse
 from fastapi import status
 from src.schemas.base import ResponseModel
 from src.utils.binance_client import BinanceClient
 from src.utils.create_response import create_response
+
 
 route_description = {
     'response_model': ResponseModel,
