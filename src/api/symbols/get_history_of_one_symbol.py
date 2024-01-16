@@ -1,7 +1,6 @@
 from fastapi import status
 from .router import router
 from src.schemas.response import AllSymbolsResponse
-from src.schemas.request import SymbolsEnum
 from src.utils.create_response import create_response
 from src.api.dependencies import UOWDep
 from src.schemas.base import ResponseModel
@@ -29,10 +28,10 @@ from fastapi_cache.decorator import cache
     }
 )
 @cache(expire=3)
-async def get_symbol_history_handler(symbol: SymbolsEnum, uow: UOWDep):
+async def get_symbol_history_handler(symbol: str, uow: UOWDep):
     data, err = await CurrencyPairsService().get_history_of_symbol(
         uow=uow,
-        symbol=symbol.value
+        symbol=symbol
     )
     if err:
         return create_response(

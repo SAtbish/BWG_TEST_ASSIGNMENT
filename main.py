@@ -10,7 +10,7 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis_worker import r, check_availability
 from starlette.requests import Request
 from fastapi.responses import JSONResponse
-
+from src.utils.binance_websocket import websocket_worker
 
 NOT_AUTHORIZATION_PATTERNS = [
     "/",
@@ -19,7 +19,6 @@ NOT_AUTHORIZATION_PATTERNS = [
     "/openapi.json",
     "/users/login"
 ]
-
 
 app = FastAPI(
     title="Black Wall Group Test Assignment"
@@ -55,6 +54,7 @@ async def add_authorization(request: Request,  call_next):
 async def startup_event():
     FastAPICache.init(RedisBackend(r), prefix="fastapi-cache")
     logging.warning(f"Redis available: {await check_availability()}")
+    await websocket_worker.initialize_session()
 
 
 if __name__ == "__main__":
