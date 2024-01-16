@@ -8,24 +8,36 @@ class CurrencyPairsService:
     @staticmethod
     async def create_currency_pair(uow: IUnitOfWork, currency_pair: CurrencyPairTime):
         async with uow:
-            new_currency_pair = await uow.currency_pairs.create_one(
-                data={**currency_pair.model_dump()}
-            )
-            await uow.commit()
-            return new_currency_pair.model_dump(exclude=["id"])
+            try:
+                await uow.currency_pairs.create_one(
+                    data={**currency_pair.model_dump()}
+                )
+                await uow.commit()
+            except Exception as e:
+                return str(e)
 
     @staticmethod
     async def create_currency_pairs(uow: IUnitOfWork, currency_pairs: list[CurrencyPair]):
-        request_time = datetime.now()
+        request_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         async with uow:
-            new_currency_pairs = await uow.currency_pairs.create_many(
-                data=[
-                    {**currency_pair.model_dump(), "time": request_time}
-                    for currency_pair in currency_pairs
-                ]
-            )
-            await uow.commit()
-            return [
-                new_currency_pair[0].to_read_model().model_dump(exclude=["id"])
-                for new_currency_pair in new_currency_pairs
-            ]
+            try:
+                await uow.currency_pairs.create_many(
+                    data=[
+                        {**currency_pair.model_dump(), "time": request_time}
+                        for currency_pair in currency_pairs
+                    ]
+                )
+                await uow.commit()
+            except Exception as e:
+                return str(e)
+
+    @staticmethod
+    async def get_history_of_symbol(uow: IUnitOfWork, symbol: str):
+        async with uow:
+            try:
+                data, err = await uow.currency_pairs.read_last(symbol=symbol)
+                if err:
+                    return None, err
+                return data, None
+            except Exception as e:
+                return {}, str(e)
