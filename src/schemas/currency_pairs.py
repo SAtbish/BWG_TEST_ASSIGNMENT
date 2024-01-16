@@ -8,7 +8,7 @@ class CurrencyPair(BaseModel):
 
 
 class CurrencyPairTime(CurrencyPair):
-    time: datetime
+    time: str
 
 
 class AllSymbols(BaseModel):

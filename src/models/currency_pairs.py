@@ -13,10 +13,12 @@ class CurrencyPairModel(Base):
     price: Mapped[float] = mapped_column(nullable=False)
     time: Mapped[datetime] = mapped_column(nullable=False)
 
-    def to_read_model(self) -> CurrencyPairTimeModel:
+    @classmethod
+    def to_read_model(cls, *args):
         return CurrencyPairTimeModel(
-            id=self.id,
-            symbol=self.symbol,
-            price=self.price,
-            time=self.time
+            id=args[0],
+            symbol=args[1],
+            price=args[2],
+            time=args[3].strftime('%Y-%m-%d %H:%M:%S.%f')
         )
+
