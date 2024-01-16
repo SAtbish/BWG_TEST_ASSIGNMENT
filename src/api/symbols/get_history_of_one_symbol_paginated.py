@@ -1,5 +1,4 @@
 from .router import router
-from src.schemas.request import SymbolsEnum
 from src.api.dependencies import UOWDep
 from src.services.currency_pairs import CurrencyPairsService
 from fastapi_pagination import Page
@@ -18,6 +17,6 @@ from src.schemas.currency_pairs import CurrencyPairTime
     response_model=Page[CurrencyPairTime]
 )
 @cache(expire=3)
-async def get_symbol_history_paginated_handler(symbol: SymbolsEnum, uow: UOWDep):
-    users = await CurrencyPairsService().get_history_of_symbol_paginated(uow, symbol=symbol.value)
+async def get_symbol_history_paginated_handler(symbol: str, uow: UOWDep):
+    users = await CurrencyPairsService().get_history_of_symbol_paginated(uow, symbol=symbol)
     return users

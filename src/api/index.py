@@ -3,7 +3,6 @@ from datetime import datetime
 from main import app
 from fastapi import status
 from src.schemas.base import ResponseModel
-from src.utils.binance_client import BinanceClient
 from src.utils.create_response import create_response
 
 
@@ -31,15 +30,7 @@ route_description = {
 @app.get("/", **route_description)
 @app.get("/ping", **route_description)
 async def index_handler():
-    bc = BinanceClient()
-    async with bc:
-        _, err = await bc.ping()
-        if err:
-            return create_response(
-                content=ResponseModel(message=err),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        return create_response(
-            content=ResponseModel(message=f"{datetime.now()}: Working..."),
-            status=status.HTTP_200_OK
-        )
+    return create_response(
+        content=ResponseModel(message=f"{datetime.now()}: Working..."),
+        status=status.HTTP_200_OK
+    )
