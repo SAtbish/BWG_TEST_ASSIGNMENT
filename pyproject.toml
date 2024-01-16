@@ -19,6 +19,7 @@ python-dotenv = "^1.0.0"
 fastapi-pagination = "^0.12.14"
 yoyo-migrations = "^8.2.0"
 fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
+psycopg2 = "^2.9.9"
 
 
 [build-system]
