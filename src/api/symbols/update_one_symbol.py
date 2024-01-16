@@ -12,25 +12,25 @@ from src.services.currency_pairs import CurrencyPairsService
 
 
 @router.get(
-    "/get/{symbol}",
+    "/update/{symbol}",
     description=(
-            "Get one pair with price "
-            "and time of request and save to database."
+            "Save one pair with price "
+            "and time of request to database."
     ),
-    summary="Get one symbols pair",
+    summary="Save one symbols pair",
     response_model=ResponseModel,
     responses={
         status.HTTP_201_CREATED: {
             "model": ResponseModel,
-            "description": "Pair received.",
+            "description": "Pair saved.",
         },
         status.HTTP_400_BAD_REQUEST: {
             "model": ResponseModel,
-            "description": "Pair not received.",
+            "description": "Pair not saved.",
         }
     }
 )
-async def get_one_symbol_pare_handler(symbol: SymbolsEnum, uow: UOWDep):
+async def update_one_symbol_pare_handler(symbol: SymbolsEnum, uow: UOWDep):
     bc = BinanceClient()
     request_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
     async with bc:
