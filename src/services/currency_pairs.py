@@ -35,6 +35,26 @@ class CurrencyPairsService:
     async def get_history_of_symbol(uow: IUnitOfWork, symbol: str):
         async with uow:
             try:
+                data, err = await uow.currency_pairs.get_all(symbol=symbol)
+                if err:
+                    return None, err
+                return data, None
+            except Exception as e:
+                return {}, str(e)
+
+    @staticmethod
+    async def get_history_of_symbol_paginated(uow: IUnitOfWork, symbol: str):
+        async with uow:
+            try:
+                data = await uow.currency_pairs.get_all_paginated(symbol=symbol)
+                return data
+            except Exception as e:
+                return str(e)
+
+    @staticmethod
+    async def get_last_data_of_symbol(uow: IUnitOfWork, symbol: str):
+        async with uow:
+            try:
                 data, err = await uow.currency_pairs.read_last(symbol=symbol)
                 if err:
                     return None, err

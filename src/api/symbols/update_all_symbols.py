@@ -13,26 +13,26 @@ import logging
 
 
 @router.get(
-    "/get/all",
+    "/update/all",
     status_code=status.HTTP_201_CREATED,
     description=(
-            "Get all pairs with prices and"
-            "time of request and save to database."
+            "Save all pairs with prices and"
+            "time of request to database."
     ),
-    summary="Get all symbols pairs",
+    summary="Save all symbols pairs",
     response_model=AddedRowsResponse,
     responses={
         status.HTTP_201_CREATED: {
             "model": AddedRowsResponse,
-            "description": "Pairs received.",
+            "description": "Pairs saved.",
         },
         status.HTTP_400_BAD_REQUEST: {
             "model": ResponseModel,
-            "description": "Pairs not received.",
+            "description": "Pairs not saved.",
         }
     }
 )
-async def get_all_symbols_pairs_handler(uow: UOWDep):
+async def update_all_symbols_pairs_handler(uow: UOWDep):
     bc = BinanceClient()
     start_time = time.time()
 
