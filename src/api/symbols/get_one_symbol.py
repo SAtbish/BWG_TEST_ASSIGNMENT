@@ -18,10 +18,10 @@ from src.services.currency_pairs import CurrencyPairsService
             "and time of request and save to database."
     ),
     summary="Get one symbols pair",
-    response_model=OneSymbolResponse,
+    response_model=ResponseModel,
     responses={
         status.HTTP_201_CREATED: {
-            "model": OneSymbolResponse,
+            "model": ResponseModel,
             "description": "Pair received.",
         },
         status.HTTP_400_BAD_REQUEST: {
@@ -32,7 +32,7 @@ from src.services.currency_pairs import CurrencyPairsService
 )
 async def get_one_symbol_pare_handler(symbol: SymbolsEnum, uow: UOWDep):
     bc = BinanceClient()
-    request_time = datetime.now()
+    request_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
     async with bc:
         symbol_data, err = await bc.get_one_ticker(symbol=symbol.value)
         if err:
@@ -43,13 +43,20 @@ async def get_one_symbol_pare_handler(symbol: SymbolsEnum, uow: UOWDep):
                 status=status.HTTP_400_BAD_REQUEST
             )
         currency_pair = CurrencyPairTime(**symbol_data, time=request_time)
-        currency_pair_data = await CurrencyPairsService().create_currency_pair(
+        err = await CurrencyPairsService().create_currency_pair(
             uow=uow,
             currency_pair=currency_pair
         )
+        if err:
+            return create_response(
+                content=ResponseModel(
+                    message=err
+                ),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     return create_response(
-        content=OneSymbolResponse(
-            data=currency_pair_data,
+        content=ResponseModel(
             message="Pair received and saved"
         ),
         status=status.HTTP_201_CREATED

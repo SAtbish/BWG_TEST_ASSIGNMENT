@@ -1,8 +1,31 @@
 from abc import ABC, abstractmethod
 
-from sqlalchemy import insert, select, update, delete
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_pagination.paginator import paginate
+
+
+def get_filters_string(
+        tablename: str,
+        filters: dict = None,
+        order_by: str = None,
+        order_direction: str = None,
+        limit: int = None
+):
+    if filters is None:
+        filters = {}
+    stmt = f"SELECT * FROM {tablename} "
+    if filters:
+        stmt += "WHERE "
+        for key, value in filters.items():
+            stmt += f"{key} = {repr(value) if isinstance(value, str) else value} AND "
+        stmt = stmt[:-4]
+    if order_by:
+        stmt += f"ORDER BY {order_by} {order_direction} "
+    if limit:
+        stmt += f"LIMIT {limit}"
+    stmt += ";"
+    return text(stmt)
 
 
 class AbstractRepository(ABC):
@@ -11,15 +34,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def read_one(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def update_one(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def delete(self, *args, **kwargs):
+    async def read_last(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -34,46 +49,65 @@ class SQLAlchemyRepository(AbstractRepository):
         self.session = session
 
     async def create_one(self, data: dict):
-        stmt = insert(self.model).values(**data).returning(self.model)
-        obj = await self.session.execute(stmt)
-        return obj.first()[0].to_read_model()
+        keys = str(tuple(data.keys())).replace("'", "")
+        values = str(tuple(data.values()))
+        stmt = text(f"INSERT INTO {self.model.__tablename__} {keys} VALUES {values};")
+        await self.session.execute(stmt)
 
     async def create_many(self, data: list[dict]):
-        stmt = insert(self.model).values(data).returning(self.model)
-        obj = await self.session.execute(stmt)
-        return obj.all()
+        if data:
+            keys = str(tuple(data[0].keys())).replace("'", "")
+            values = str([str(tuple(elem.values())) for elem in data]).translate({ord(x): '' for x in ['"', "[", "]"]})
+            stmt = text(f"INSERT INTO {self.model.__tablename__} {keys} VALUES {values};")
+            await self.session.execute(stmt)
+        else:
+            raise ValueError("nothing to add")
 
-    async def read_one(self, **filters):
-        stmt = select(self.model).filter_by(**filters)
+    async def read_last(self, **filters):
+        stmt = get_filters_string(
+            tablename=self.model.__tablename__,
+            filters=filters,
+            order_by="id",
+            order_direction="DESC",
+            limit=1
+        )
         objects = await self.session.execute(stmt)
+
         obj = objects.first()
         if obj:
-            obj = obj[0]
-        return obj
+            obj = self.model.to_read_model(*obj)
+            return obj, None
 
-    async def update_one(self, obj_id: int, data: dict) -> int:
-        stmt = update(self.model).values(**data).filter_by(id=obj_id).returning(self.model)
-        obj = await self.session.execute(stmt)
-        return obj.first()[0]
+        return obj, "not_find"
 
-    async def delete_one_by_id(self, obj_id: int) -> int:
-        stmt = delete(self.model).filter_by(id=obj_id).returning(self.model.id)
-        obj = await self.session.execute(stmt)
-        return obj.scalar_one()
+    async def read(self, **filters):
+        stmt = get_filters_string(
+            tablename=self.model.__tablename__,
+            filters=filters
+        )
+        objects = await self.session.execute(stmt)
 
-    async def delete(self, **filters):
-        stmt = delete(self.model).filter_by(**filters).returning(self.model.id)
-        obj = await self.session.execute(stmt)
-        return obj.all()
+        obj = objects.first()
+        if obj:
+            obj = self.model.to_read_model(*obj)
+            return obj, None
+
+        return obj, "not_find"
 
     async def get_all(self, **filters):
-        stmt = select(self.model).filter_by(**filters)
+        stmt = get_filters_string(
+            tablename=self.model.__tablename__,
+            filters=filters
+        )
         objects = await self.session.execute(stmt)
-        result = [obj[0].to_read_model() for obj in objects.all()]
+        result = [self.model.to_read_model(*obj) for obj in objects.all()]
         return result
 
     async def get_all_paginated(self, **filters):
-        stmt = select(self.model).filter_by(**filters)
+        stmt = get_filters_string(
+            tablename=self.model.__tablename__,
+            filters=filters
+        )
         objects = await self.session.execute(stmt)
-        paginated_objects = paginate(sequence=[obj[0] for obj in objects.all()])
+        paginated_objects = paginate(sequence=[obj for obj in objects.all()])
         return paginated_objects
