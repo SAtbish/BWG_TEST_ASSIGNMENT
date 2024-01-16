@@ -3,13 +3,13 @@ import time
 from fastapi import status
 from .router import router
 from src.utils.create_response import create_response
-from src.utils.binance_client import BinanceClient
 from src.schemas.response import AddedRowsResponse, AddedRows
 from src.schemas.currency_pairs import CurrencyPair
 from src.api.dependencies import UOWDep
 from src.schemas.base import ResponseModel
 from src.services.currency_pairs import CurrencyPairsService
 import logging
+from src.utils.binance_websocket import websocket_worker
 
 
 @router.get(
@@ -33,32 +33,28 @@ import logging
     }
 )
 async def update_all_symbols_pairs_handler(uow: UOWDep):
-    bc = BinanceClient()
     start_time = time.time()
-
-    async with bc:
-        all_tickers, err = await bc.get_all_tickers()
-        get_data_time = time.time() - start_time
-        if err:
-            return create_response(
-                content=ResponseModel(
-                    message=err
-                ),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        currency_pairs = [CurrencyPair(**row) for row in all_tickers]
-        err = await CurrencyPairsService().create_currency_pairs(
-            uow,
-            currency_pairs=currency_pairs
+    all_tickers, err = await websocket_worker.get_symbols()
+    get_data_time = time.time() - start_time
+    if err:
+        return create_response(
+            content=ResponseModel(
+                message=err
+            ),
+            status=status.HTTP_400_BAD_REQUEST
         )
-        if err:
-            return create_response(
-                content=ResponseModel(
-                    message=err
-                ),
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    currency_pairs = [CurrencyPair(**row) for row in all_tickers]
+    err = await CurrencyPairsService().create_currency_pairs(
+        uow,
+        currency_pairs=currency_pairs
+    )
+    if err:
+        return create_response(
+            content=ResponseModel(
+                message=err
+            ),
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     rows_added_time = time.time() - get_data_time - start_time
     added_rows_len = len(currency_pairs)
